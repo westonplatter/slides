@@ -1,0 +1,161 @@
+Docker + Rails
+A Practical guide
+Tags: docker rails
+
+Weston Platter
+Contractor, UnitedHealthcare
+westonplatter@gmail.com
+@westonplatter
+
+* What are we doing?
+
+Deploy
+
+- rails app
+- postgres
+- redis
+
+via Docker
+
+* What is docker?
+Sandboxed execution of unix processes
+
+TODO(link from docker/boot2docker docs about macosx containers)
+
+
+more info 
+
+.link http://www.docker.com/whatisdocker
+
+
+* Setup - install
+This was confusing
+
+moving pieces
+- docker client
+- boot2docker
+
+TODO(image of client/boot2docker)
+
+
+* Setup - building images
+
+Dockerfile 
+
+    FROM ubuntu:14.04
+    MAINTAINER Weston Platter <westonplatter@gmail.com>
+
+    RUN echo "up and running"
+
+build process
+    
+    boot2docker up
+    $(boot2docker shellinit)
+    docker build -t "some_img" .
+
+resulting image
+
+  docker images
+
+  REPOSITORY              TAG      IMAGE ID            CREATED             VIRTUAL SIZE
+
+  westonplatter/ruby      2.1.2    fd2889a4b194        14 hours ago        885.7 MB
+
+
+
+
+* Data Stores
+
+Postgres
+  
+.link TODO(fig/postgres)
+
+Redis
+
+.link TODO(redis/redis)
+
+
+* Data Store - postgres
+TODO(pull down)
+TODO(start)
+TODO(connect)
+TODO(done)
+
+
+* Data Store - redis
+TODO(pull down)
+TODO(start)
+TODO(connect)
+TODO(done)
+
+* Data Store - result
+TODO(show independent processes)
+
+
+* Infrastructure build process
+TODO(show layers)
+Ruby
+Nodejs
+NGINX
+Bundler
+Unicorn
+Foreman
+
+* Ruby - as docker image
+TODO(dockerfile)
+
+* Ruby - basic os
+
+TODO(basic os)
+
+* Ruby - ruby
+TODO(ruby)
+
+* Ruby - nodejs
+TODO(nodejs)
+
+* Ruby - imagemagick
+TODO(imagemagick)
+
+* Ruby - end product
+TODO(picture of build process)
+TODO(picture of docker images)
+TODO(visual of boot2docker)
+TODO(commit process)
+
+* Ruby - interactive shell
+TODO(show shell interaction)
+
+
+* Web Server
+reverse proxy via NGINX + Ruby's unicorn
+
+environment
+- nginx
+- nginx-virtualhost
+- foreman 
+- unicorn
+
+TODO(visual of reverse proxy)
+
+* Web Server - "config" files
+TODO(image to show adding files to the container)
+
+* Web Server - build
+TODO(build -> visual of the resulting docker image)
+
+* Rails
+environment
+- basic OS
+- ruby
+- nodejs (compile/test javascript)
+- imagemagick
+
+.link http://github.com/westonplatter/dockerfiles/ruby/Dockerfile
+
+* Thanks
+
+Weston Platter
+@westonplatter
+
+.link github.com/westonplatter/dockerfiles
