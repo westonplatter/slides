@@ -20,22 +20,44 @@ via Docker
 * What is docker?
 Sandboxed execution of unix processes
 
-TODO(link from docker/boot2docker docs about macosx containers)
-
-
 more info 
 
 .link http://www.docker.com/whatisdocker
 
 
-* Setup - install
+* Why docker?
+Deploy everything
+- web apps
+- backends
+- SQL, NoSQL
+- Big Data
+- Message Queues
+- ... any process
+
+(http://www.slideshare.net/jpetazzo #13)
+
+* Cool graphs 1/1
+.image images/inbound.png
+(http://www.slideshare.net/jpetazzo #17)
+
+* Cool graphs 1/2
+.image images/memory.png
+(http://www.slideshare.net/jpetazzo #18)
+
+* Mac setup - install
 This was confusing
 
-moving pieces
-- docker client
-- boot2docker
+.image images/boot2docker.jpeg
 
-TODO(image of client/boot2docker)
+
+* Mac Setup - install 
+- client
+    mac     brew install docker
+    ubuntu  apt-get install docker  
+
+- builder
+    mac     boot2docker (v1.3.0 https://github.com/boot2docker/osx-installer)
+    ubuntu  apt-get install lcx-docker 
 
 
 * Setup - building images
@@ -47,111 +69,215 @@ Dockerfile
 
     RUN echo "up and running"
 
-build process
+mac build process
     
-    boot2docker up
-    $(boot2docker shellinit)
-    docker build -t "some_img" .
+    $ boot2docker up
+    $ $(boot2docker shellinit)
+    $ docker build -t "some_img" .
 
 resulting image
 
-  docker images
+  $ docker images
 
   REPOSITORY              TAG      IMAGE ID            CREATED             VIRTUAL SIZE
 
   westonplatter/ruby      2.1.2    fd2889a4b194        14 hours ago        885.7 MB
 
 
-
-
 * Data Stores
 
 Postgres
   
-.link TODO(fig/postgres)
+.link https://registry.hub.docker.com/u/orchardup/postgresql/dockerfile/
+
+Postgres instructions
+  
+.link https://www.orchardup.com/docs/getting-started/postgres
 
 Redis
 
-.link TODO(redis/redis)
+.link https://github.com/dockerfile/redis 
 
 
-* Data Store - postgres
-TODO(pull down)
-TODO(start)
-TODO(connect)
-TODO(done)
+* Data Store - postgresql
+
+    $ docker pull orchardup/postgresql
+ 
+    $ docker run -d -p 5432:5432 \
+                    --name pgsql \
+                    -e POSTGRESQL_USER=docker \
+                    -e POSTGRESQL_PASS=docker \
+                    orchardup/postgresql
+
+Check it 
+
+    $ docker ps 
+
+    CONTAINER ID  IMAGE                        COMMAND               PORTS                   NAMES
+
+    660adbb7e7e7  orchardup/postgresql:latest  "/usr/local/bin/run"  0.0.0.0:5432->5432/tcp  pgsql               
 
 
 * Data Store - redis
-TODO(pull down)
-TODO(start)
-TODO(connect)
-TODO(done)
+    
+    $ docker pull dockerfile/redis
 
-* Data Store - result
-TODO(show independent processes)
+    $ docker run -d \
+      --name redis \
+      -p 6379:6379 \
+      dockerfile/redis
 
+Check it 
 
-* Infrastructure build process
-TODO(show layers)
-Ruby
-Nodejs
-NGINX
-Bundler
-Unicorn
-Foreman
+    $ docker ps
 
-* Ruby - as docker image
-TODO(dockerfile)
+    CONTAINER ID  IMAGE                        COMMAND               PORTS                   NAMES
 
-* Ruby - basic os
+    660adbb7e7e7  orchardup/postgresql:latest  "/usr/local/bin/run"  0.0.0.0:5432->5432/tcp  pgsql               
 
-TODO(basic os)
-
-* Ruby - ruby
-TODO(ruby)
-
-* Ruby - nodejs
-TODO(nodejs)
-
-* Ruby - imagemagick
-TODO(imagemagick)
-
-* Ruby - end product
-TODO(picture of build process)
-TODO(picture of docker images)
-TODO(visual of boot2docker)
-TODO(commit process)
-
-* Ruby - interactive shell
-TODO(show shell interaction)
+    5b1f8e0ea0cc  dockerfile/redis:latest      "redis-server /etc/r  0.0.0.0:6379->6379/tcp  redis 
 
 
-* Web Server
-reverse proxy via NGINX + Ruby's unicorn
+* Rails app
+  
+Todolist Rails app
+    
+    $ git clone git@github.com:westonplatter/todolist-rails.git
 
-environment
-- nginx
-- nginx-virtualhost
-- foreman 
-- unicorn
+Dockerfile
+- ruby 
+- nodejs
+- server
+- ruby gems
+- migrations
 
-TODO(visual of reverse proxy)
+* Rails app
+Dockerfile - ruby
 
-* Web Server - "config" files
-TODO(image to show adding files to the container)
+    FROM fedora:20
+    RUN yum install -y which git-core curl make bzip2 gcc-c++ patch readline readline-devel  \
+                             zlib zlib-devel libyaml-devel libffi-devel libxslt-devel sqlite \
+                             sqlite-devel openssl openssl-devel kernel-devel kernel-headers  \ 
+                             gcc make zsh vim-enhanced postgresql postgresql-devel
 
-* Web Server - build
-TODO(build -> visual of the resulting docker image)
+    RUN curl -sSL https://get.rvm.io | bash -s stable 
+    RUN /bin/bash -l -c "rvm requirements"
+    RUN /bin/bash -l -c "rvm install 2.0.0-turbo"
+    RUN /bin/bash -l -c "rvm use 2.0.0-turbo --default"
 
-* Rails
-environment
-- basic OS
-- ruby
-- nodejs (compile/test javascript)
-- imagemagick
+* Rails app
+Dockerfile - nodejs
 
-.link http://github.com/westonplatter/dockerfiles/ruby/Dockerfile
+    RUN yum install -y nodejs
+
+Dockerfile - ruby gems
+
+    RUN mkdir /app
+    WORKDIR /app
+    ADD Gemfile /app/Gemfile
+    ADD Gemfile.lock /app/Gemfile.lock
+    RUN /bin/bash -l -c "bundle install --deployment"
+
+    ADD . /app
+
+Dockerfile - server
+
+    CMD /bin/bash -l -c "rails server"
+
+* Build docker image
+
+    $ cd todolist-rails
+
+    $ docker build -t todolist .
+
+.image images/build-steps.png 
+
+* Idempotent layers
+.image images/layers.png
+
+
+* Pushing/pulling impact
+
+Pushing - only push "image layer" 1x
+
+  $ docker push westonplatter/rails-unicorn-nginx:2.1.2                                                                                                                                         [1h32m]
+  
+  The push refers to a repository [westonplatter/rails-unicorn-nginx] (len: 1)
+  Sending image list
+  Pushing repository westonplatter/rails-unicorn-nginx (1 tags)
+  511136ea3c5a: Image already pushed, skipping 
+  2dcbbf65536c: Image already pushed, skipping 
+  e4cc397a3e0f: Pushing ...
+  ...
+
+Pulling - same effect
+
+
+* Rails env - migrations/seeds
+
+Migrations
+  
+  docker run  -i -t \
+              --link redis:redis \
+              --link pgsql:pgsql \
+              todolist \
+              /bin/bash -l -c "RAILS_ENV=production bundle exec rake db:migrate"
+
+  docker run  -i -t \
+              --link ** ANYTHING **
+              ** DOCKER IMAGE **
+              ** COMMAND **
+
+
+* Let's see it in action 
+  
+Locally ...
+    
+    $ rails generate scaffold Category name:string
+
+    $ bundle exec rake db:migrate
+
+    $ ( git commit && push)
+
+Server ...
+
+    $ git pull
+
+    $ docker build -t todolist .
+
+See docker image change
+
+* Rails env change
+
+migration 
+
+    $ docker run  -i -t --link redis:redis --link pgsql:pgsql todolist /bin/bash -l -c "RAILS_ENV=production bundle exec rake db:migrate"
+
+    $ docker stop  ** CONTAINER_ID **
+
+    $ docker run -i -d \
+                    -p 3000:3000 \
+                    --link redis:redis \
+                    --link pgsql:pgsql \
+                    --name web \
+                    -e SECRET_KEY_BASE=secret \
+                    todolist \
+                    /bin/bash -l -c 'RAILS_ENV=production bundle exec rails server'
+
+.link 192.241.179.187:3000
+
+* Things I'm waiting for
+
+- hot-swapping docker images
+.link https://github.com/docker/docker/issues/2733
+
+- FlockerHQ - "ZFS" for Docker data volumes
+.link https://clusterhq.com
+
+- dynamic container linking
+.link https://docs.docker.com/articles/ambassador_pattern_linking/
+.link https://github.com/cpuguy83/docker-grand-ambassador
+
 
 * Thanks
 
